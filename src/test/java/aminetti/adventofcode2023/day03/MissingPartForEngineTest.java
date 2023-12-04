@@ -99,4 +99,35 @@ class MissingPartForEngineTest {
         assertThat(total, is(520019));
     }
 
+
+    @Test
+    void getAllGearRatioNearStars() {
+        int total = service.sumAllGearRatio(
+                List.of(
+                        "467..114..",
+                        "...*......",
+                        "..35..633.",
+                        "......#...",
+                        "617*......",
+                        ".....+.58.",
+                        "..592.....",
+                        "......755.",
+                        "...$.*....",
+                        ".664.598.."
+                )
+        );
+
+        assertThat(total, is(467835));
+    }
+
+    @Test
+    void realInputForPart2() {
+        List<String> list = readLines(MissingPartForEngineTest.class.getResourceAsStream("/day03/day3_input.txt"), UTF_8);
+
+        int total = service.sumAllGearRatio(list);
+
+        assertThat(total, is(520019));
+    }
+
+
 }
