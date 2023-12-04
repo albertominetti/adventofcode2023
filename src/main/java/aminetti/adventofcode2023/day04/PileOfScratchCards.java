@@ -19,13 +19,11 @@ public class PileOfScratchCards {
     private static final Logger LOGGER = LoggerFactory.getLogger(PileOfScratchCards.class);
     private final int winningNumbers;
     private final int playedNumbers;
+    private final Pattern pattern;
 
     public PileOfScratchCards(int winningNumbers, int playedNumbers) {
         this.winningNumbers = winningNumbers;
         this.playedNumbers = playedNumbers;
-    }
-
-    public int calculatePoints(List<String> lines) {
 
         String digits = "(\\d+)";
         String winning = join(" +", nCopies(winningNumbers, digits));
@@ -34,7 +32,11 @@ public class PileOfScratchCards {
         String regex = "Card +\\d+: +%s \\| +%s".formatted(winning, played);
         LOGGER.info("Regex {}", regex);
 
-        Pattern pattern = Pattern.compile(regex);
+        pattern = Pattern.compile(regex);
+    }
+
+    public int calculatePoints(List<String> lines) {
+
 
         int score = 0;
         for (String line : lines) {
