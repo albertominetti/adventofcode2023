@@ -16,8 +16,8 @@ public class SeedFertilizer {
     private static final Pattern DEST_SOURCE_RANGE = Pattern.compile("(\\d+) (\\d+) (\\d+)");
     private static final Pattern MAPPER_NAME = Pattern.compile("(.+) map:");
 
-    public List<ConsecutiveMapper> readMappers(List<String> lines) {
-        List<ConsecutiveMapper> mappers = new ArrayList<>();
+    public List<Mapper> readMappers(List<String> lines) {
+        List<Mapper> mappers = new ArrayList<>();
 
         LOGGER.info("Lists: {}", lines);
 
@@ -28,7 +28,7 @@ public class SeedFertilizer {
             if (!nameMatcher.matches()) {
                 throw new IllegalArgumentException("Can't check the name, probably wrong input");
             }
-            ConsecutiveMapper current = new ConsecutiveMapper(nameMatcher.group(1));
+            Mapper current = new Mapper(nameMatcher.group(1));
 
             line = iterator.next();
 
@@ -64,11 +64,11 @@ public class SeedFertilizer {
         return results;
     }
 
-    public List<Integer> solve(List<ConsecutiveMapper> mappers, List<Integer> seeds) {
+    public List<Integer> mapSeeds(List<Mapper> mappers, List<Integer> seeds) {
         List<Integer> results = new ArrayList<>();
         for (Integer seed : seeds) {
             int current = seed;
-            for (ConsecutiveMapper mapper : mappers) {
+            for (Mapper mapper : mappers) {
                 current = mapper.map(current);
             }
             results.add(current);
@@ -76,44 +76,51 @@ public class SeedFertilizer {
         return results;
     }
 
-    public static class ConsecutiveMapper {
-        private final String name;
-        private final SortedSet<SourceDestinationRange> sourceDestinationRangeList = new TreeSet<>();
+    public int solvePart1(List<String> lines) {
+        List<Integer> seeds = readSeeds(lines);
+        List<SeedFertilizer.Mapper> mappers = readMappers(lines.subList(2, lines.size()));
 
-        public ConsecutiveMapper(String name) {
+        List<Integer> localtions = mapSeeds(mappers, seeds);
+
+        return localtions.stream().min(Integer::compareTo)
+                .orElseThrow(() -> new IllegalArgumentException("Something messy with the input?"));
+
+    }
+
+    public static class Mapper {
+        private final String name;
+        private final SortedSet<MappingRule> rules = new TreeSet<>();
+
+        public Mapper(String name) {
             this.name = name;
         }
 
         public int map(int current) {
-
-            Iterator<SourceDestinationRange> iterator = sourceDestinationRangeList.iterator();
-            while (iterator.hasNext()) {
-                SourceDestinationRange element = iterator.next();
-
-                if (element.source <= current && current < element.source + element.range) {
-                    // to be completed....
+            for (MappingRule element : rules) {
+                if (current < element.source) break;
+                if (current < element.source + element.range) {
+                    return current + (element.destination - element.source);
                 }
-
             }
             return current;
         }
 
         public void add(int source, int destination, int range) {
-            sourceDestinationRangeList.add(new SourceDestinationRange(source, destination, range));
+            rules.add(new MappingRule(source, destination, range));
         }
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", ConsecutiveMapper.class.getSimpleName() + "[", "]")
+            return new StringJoiner(", ", Mapper.class.getSimpleName() + "[", "]")
                     .add("name='" + name + "'")
-                    .add("fromToRangeList=" + sourceDestinationRangeList)
+                    .add("fromToRangeList=" + rules)
                     .toString();
         }
 
-        public record SourceDestinationRange(int source, int destination, int range) implements Comparable<SourceDestinationRange> {
+        public record MappingRule(int source, int destination, int range) implements Comparable<MappingRule> {
 
             @Override
-            public int compareTo(SourceDestinationRange o) {
+            public int compareTo(MappingRule o) {
                 return Integer.compare(source, o.source);
             }
         }
