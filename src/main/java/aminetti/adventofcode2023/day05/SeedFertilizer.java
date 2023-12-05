@@ -7,8 +7,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
-import static java.lang.Integer.parseInt;
+import static java.lang.Long.parseLong;
 
 public class SeedFertilizer {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeedFertilizer.class);
@@ -18,8 +20,6 @@ public class SeedFertilizer {
 
     public List<Mapper> readMappers(List<String> lines) {
         List<Mapper> mappers = new ArrayList<>();
-
-        LOGGER.info("Lists: {}", lines);
 
         Iterator<String> iterator = lines.iterator();
         while (iterator.hasNext()) {
@@ -35,9 +35,9 @@ public class SeedFertilizer {
             while (!StringUtils.isBlank(line) && iterator.hasNext()) {
                 Matcher matcher = DEST_SOURCE_RANGE.matcher(line);
                 if (matcher.matches()) {
-                    int destinationStart = parseInt(matcher.group(1));
-                    int sourceStart = parseInt(matcher.group(2));
-                    int rangeLength = parseInt(matcher.group(3));
+                    long destinationStart = parseLong(matcher.group(1));
+                    long sourceStart = parseLong(matcher.group(2));
+                    long rangeLength = parseLong(matcher.group(3));
 
                     current.add(sourceStart, destinationStart, rangeLength);
                 }
@@ -48,41 +48,74 @@ public class SeedFertilizer {
 
         }
 
-
         return mappers;
     }
 
-    public List<Integer> readSeeds(List<String> lines) {
-        List<Integer> results = new ArrayList<>();
+    public List<Long> readSeeds(List<String> lines) {
+        return readNumbers(lines.get(0));
+    }
+
+    public List<Long> readNumbers(String line) {
+        List<Long> results = new ArrayList<>();
         Pattern pattern = Pattern.compile("(\\d+)");
 
-        Matcher matcher = pattern.matcher(lines.get(0)); // getFirst() should be available
+        Matcher matcher = pattern.matcher(line);
 
         while (matcher.find()) {
-            results.add(parseInt(matcher.group()));
+            results.add(parseLong(matcher.group()));
         }
         return results;
     }
 
-    public List<Integer> mapSeeds(List<Mapper> mappers, List<Integer> seeds) {
-        List<Integer> results = new ArrayList<>();
-        for (Integer seed : seeds) {
-            int current = seed;
-            for (Mapper mapper : mappers) {
-                current = mapper.map(current);
-            }
+    public Stream<Long> readSeedsAsRanges(List<String> lines) {
+        Stream<Long> resultStream = Stream.empty();
+
+        List<Long> results = readNumbers(lines.get(0));
+        for (int i = 0; i < results.size(); i += 2) {
+            Long from = results.get(i);
+            Long range = results.get(i + 1);
+            LOGGER.info("Preparing a Stream from {} to {}", from, from + range);
+            resultStream = Stream.concat(resultStream,
+                    LongStream.range(from, from + range).boxed());
+        }
+        return resultStream;
+    }
+
+    public List<Long> mapSeeds(List<Mapper> mappers, List<Long> seeds) {
+        List<Long> results = new ArrayList<>();
+        for (Long seed : seeds) {
+            long current = mapSeed(mappers, seed);
             results.add(current);
         }
         return results;
     }
 
-    public int solvePart1(List<String> lines) {
-        List<Integer> seeds = readSeeds(lines);
+    private static long mapSeed(List<Mapper> mappers, Long seed) {
+        long current = seed;
+        for (Mapper mapper : mappers) {
+            current = mapper.map(current);
+        }
+        return current;
+    }
+
+    public long solvePart1(List<String> lines) {
+        List<Long> seeds = readSeeds(lines);
         List<SeedFertilizer.Mapper> mappers = readMappers(lines.subList(2, lines.size()));
 
-        List<Integer> localtions = mapSeeds(mappers, seeds);
+        List<Long> locations = mapSeeds(mappers, seeds);
 
-        return localtions.stream().min(Integer::compareTo)
+        return locations.stream().min(Long::compareTo)
+                .orElseThrow(() -> new IllegalArgumentException("Something messy with the input?"));
+
+    }
+
+    public long solvePart2(List<String> lines) {
+        Stream<Long> seeds = readSeedsAsRanges(lines);
+        List<SeedFertilizer.Mapper> mappers = readMappers(lines.subList(2, lines.size()));
+
+        return seeds.parallel()
+                .map(s -> mapSeed(mappers, s))
+                .min(Long::compareTo)
                 .orElseThrow(() -> new IllegalArgumentException("Something messy with the input?"));
 
     }
@@ -95,17 +128,17 @@ public class SeedFertilizer {
             this.name = name;
         }
 
-        public int map(int current) {
-            for (MappingRule element : rules) {
-                if (current < element.source) break;
-                if (current < element.source + element.range) {
-                    return current + (element.destination - element.source);
+        public long map(long current) {
+            for (MappingRule rule : rules) {
+                if (current < rule.source) break;
+                if (current < rule.source + rule.range) {
+                    return current + (rule.destination - rule.source);
                 }
             }
             return current;
         }
 
-        public void add(int source, int destination, int range) {
+        public void add(long source, long destination, long range) {
             rules.add(new MappingRule(source, destination, range));
         }
 
@@ -117,11 +150,11 @@ public class SeedFertilizer {
                     .toString();
         }
 
-        public record MappingRule(int source, int destination, int range) implements Comparable<MappingRule> {
+        public record MappingRule(long source, long destination, long range) implements Comparable<MappingRule> {
 
             @Override
             public int compareTo(MappingRule o) {
-                return Integer.compare(source, o.source);
+                return Long.compare(source, o.source);
             }
         }
     }

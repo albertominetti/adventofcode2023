@@ -1,5 +1,6 @@
 package aminetti.adventofcode2023.day05;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -28,10 +29,10 @@ class SeedFertilizerTest {
     void readSeeds() {
         List<String> list = readLines(SeedFertilizerTest.class.getResourceAsStream("/day05/day5_test_input.txt"), UTF_8);
 
-        List<Integer> seeds = seedFertilizer.readSeeds(list);
+        List<Long> seeds = seedFertilizer.readSeeds(list);
 
         assertThat(seeds, hasSize(4));
-        assertThat(seeds, containsInAnyOrder(79, 14, 55, 13));
+        assertThat(seeds, containsInAnyOrder(79L, 14L, 55L, 13L));
     }
 
     @Test
@@ -42,18 +43,27 @@ class SeedFertilizerTest {
         mapper.add(100, 200, 20);
         mapper.add(10, 4, 50);
 
-        assertThat(mapper.map(90), is(90));
-        assertThat(mapper.map(110), is(210));
-        assertThat(mapper.map(12), is(6));
-        assertThat(mapper.map(300), is(300));
+        assertThat(mapper.map(90), is(90L));
+        assertThat(mapper.map(110), is(210L));
+        assertThat(mapper.map(12), is(6L));
+        assertThat(mapper.map(300), is(300L));
     }
 
     @Test
     void solve() {
         List<String> list = readLines(SeedFertilizerTest.class.getResourceAsStream("/day05/day5_test_input.txt"), UTF_8);
 
-        int min = seedFertilizer.solvePart1(list);
+        long min = seedFertilizer.solvePart1(list);
 
-        assertThat(min, is(35));
+        assertThat(min, is(35L));
+    }
+
+    @Test @Disabled // not very performant
+    void solvePart2() {
+        List<String> list = readLines(SeedFertilizerTest.class.getResourceAsStream("/day05/day5_input.txt"), UTF_8);
+
+        long min = seedFertilizer.solvePart2(list);
+
+        assertThat(min, is(10834440L));
     }
 }
