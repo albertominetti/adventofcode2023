@@ -126,7 +126,7 @@ class MissingPartForEngineTest {
 
         int total = service.sumAllGearRatio(list);
 
-        assertThat(total, is(520019));
+        assertThat(total, is(75519888));
     }
 
 
