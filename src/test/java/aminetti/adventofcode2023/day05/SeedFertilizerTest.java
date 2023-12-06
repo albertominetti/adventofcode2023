@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.IOUtils.readLines;
@@ -58,7 +59,19 @@ class SeedFertilizerTest {
         assertThat(min, is(35L));
     }
 
-    @Test @Disabled // not very performant
+    @Test
+    void testForStreamConcatenation() {
+        Stream<String> x = Stream.empty();
+
+        for (int i = 0; i < 5; i++) {
+            x = Stream.concat(x, Stream.of("" + 1, "asd" + i));
+        }
+
+        x.unordered().parallel().forEach(System.out::println);
+    }
+
+    @Test
+    @Disabled("Slow! It takes 3 minutes to complete")
     void solvePart2() {
         List<String> list = readLines(SeedFertilizerTest.class.getResourceAsStream("/day05/day5_input.txt"), UTF_8);
 

@@ -8,7 +8,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import static java.lang.Long.parseLong;
 
@@ -67,16 +66,16 @@ public class SeedFertilizer {
         return results;
     }
 
-    public Stream<Long> readSeedsAsRanges(List<String> lines) {
-        Stream<Long> resultStream = Stream.empty();
+    public LongStream readSeedsAsRanges(List<String> lines) {
+        LongStream resultStream = LongStream.empty();
 
         List<Long> results = readNumbers(lines.get(0));
         for (int i = 0; i < results.size(); i += 2) {
             Long from = results.get(i);
             Long range = results.get(i + 1);
             LOGGER.info("Preparing a Stream from {} to {}", from, from + range);
-            resultStream = Stream.concat(resultStream,
-                    LongStream.range(from, from + range).boxed());
+            resultStream = LongStream.concat(resultStream,
+                    LongStream.range(from, from + range));
         }
         return resultStream;
     }
@@ -110,14 +109,13 @@ public class SeedFertilizer {
     }
 
     public long solvePart2(List<String> lines) {
-        Stream<Long> seeds = readSeedsAsRanges(lines);
+        LongStream seeds = readSeedsAsRanges(lines);
         List<SeedFertilizer.Mapper> mappers = readMappers(lines.subList(2, lines.size()));
 
-        return seeds.parallel()
+        return seeds.unordered().parallel()
                 .map(s -> mapSeed(mappers, s))
-                .min(Long::compareTo)
+                .min()
                 .orElseThrow(() -> new IllegalArgumentException("Something messy with the input?"));
-
     }
 
     public static class Mapper {
