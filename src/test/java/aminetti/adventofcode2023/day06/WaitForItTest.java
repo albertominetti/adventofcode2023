@@ -66,4 +66,40 @@ class WaitForItTest {
 
         assertThat(marginError, is((long) 220320));
     }
+
+
+    @Test
+    void maxHoldingToWinPart2() {
+        long min = solver.maxHoldingToWin(71530L, 940200L);
+
+        assertThat(min, is(71516L));
+    }
+
+    @Test
+    void minHoldingToWinPart2() {
+        long min = solver.minHoldingToWin(71530L, 940200L);
+
+        assertThat(min, is(14L));
+    }
+
+
+    @Test
+    void solve2() {
+        long waysToWin = solver.solvePart2(List.of(
+                "Time:      7  15   30",
+                "Distance:  9  40  200)"
+        ));
+
+        assertThat(waysToWin, is((long) 71503));
+    }
+
+
+    @Test
+    void solvePart2() {
+        List<String> list = readLines(WaitForItTest.class.getResourceAsStream("/day06/day6_input.txt"), UTF_8);
+
+        long marginError = solver.solvePart2(list);
+
+        assertThat(marginError, is((long) 34454850));
+    }
 }
