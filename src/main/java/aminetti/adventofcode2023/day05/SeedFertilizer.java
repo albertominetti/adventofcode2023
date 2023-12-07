@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
+import static aminetti.adventofcode2023.ParsingUtils.readNumbers;
 import static java.lang.Long.parseLong;
 
 public class SeedFertilizer {
@@ -54,17 +55,6 @@ public class SeedFertilizer {
         return readNumbers(lines.get(0));
     }
 
-    public List<Long> readNumbers(String line) {
-        List<Long> results = new ArrayList<>();
-        Pattern pattern = Pattern.compile("(\\d+)");
-
-        Matcher matcher = pattern.matcher(line);
-
-        while (matcher.find()) {
-            results.add(parseLong(matcher.group()));
-        }
-        return results;
-    }
 
     public LongStream readSeedsAsRanges(List<String> lines) {
         LongStream resultStream = LongStream.empty();
@@ -109,6 +99,8 @@ public class SeedFertilizer {
     }
 
     public long solvePart2(List<String> lines) {
+        // best way would be reading the ranges, and them pass the ranges to the mappers one by one
+        // without no actual calculation of each single value but getting new ranges to pass to the next mapper
         LongStream seeds = readSeedsAsRanges(lines);
         List<SeedFertilizer.Mapper> mappers = readMappers(lines.subList(2, lines.size()));
 

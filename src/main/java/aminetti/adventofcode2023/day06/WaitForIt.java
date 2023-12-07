@@ -1,36 +1,21 @@
 package aminetti.adventofcode2023.day06;
 
-import aminetti.adventofcode2023.day05.SeedFertilizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import static aminetti.adventofcode2023.ParsingUtils.readNumbers;
 import static java.lang.Long.parseLong;
 
 public class WaitForIt {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitForIt.class);
 
 
-    public List<Long> readNumbers(String line) {
-        List<Long> results = new ArrayList<>();
-        Pattern pattern = Pattern.compile("(\\d+)");
-
-        Matcher matcher = pattern.matcher(line);
-
-        while (matcher.find()) {
-            results.add(parseLong(matcher.group()));
-        }
-        return results;
-    }
-
-
     public Long readNumberWithBadKerning(String line) {
-        List<Long> results = new ArrayList<>();
         Pattern pattern = Pattern.compile("[^\\d]");
 
         Matcher matcher = pattern.matcher(line);
@@ -56,7 +41,7 @@ public class WaitForIt {
         return IntStream.range(0, times.size())
                 .unordered().parallel()
                 .mapToLong(i -> waysToWin(times.get(i), distances.get(i)))
-                .peek(x -> System.out.println(x))
+                .peek(x -> LOGGER.info("Ways to win: {}", x))
                 .reduce(1, (a, b) -> a * b);
 
     }
