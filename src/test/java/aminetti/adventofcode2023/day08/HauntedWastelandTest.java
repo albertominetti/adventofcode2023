@@ -1,7 +1,9 @@
 package aminetti.adventofcode2023.day08;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +59,65 @@ class HauntedWastelandTest {
         assertThat(solve, greaterThan(271L));
         assertThat(solve, is(18157L));
 
+
+    }
+
+
+    @Test
+    void solveTestPart2() {
+
+        List<String> testInput = List.of(
+                "LR",
+                "",
+                "11A = (11B, XXX)",
+                "11B = (XXX, 11Z)",
+                "11Z = (11B, XXX)",
+                "22A = (22B, XXX)",
+                "22B = (22C, 22C)",
+                "22C = (22Z, 22Z)",
+                "22Z = (22B, 22B)",
+                "XXX = (XXX, XXX)"
+        );
+
+        long solve = solver.solve2(testInput);
+
+        assertThat(solve, is(6L));
+
+
+    }
+
+    @Test
+    void solveTestPart2Bis() {
+
+        List<String> testInput = List.of(
+                "LR",
+                "",
+                "11A = (11B, XXX)",
+                "11B = (XXX, 11Z)",
+                "11Z = (11B, XXX)",
+                "22A = (22B, XXX)",
+                "22B = (22C, 22C)",
+                "22C = (22Z, 22Z)",
+                "22Z = (22B, 22B)",
+                "XXX = (XXX, XXX)"
+        );
+
+        BigInteger solve = solver.solvePart2ByCountingThe(testInput);
+
+        assertThat(solve, is(new BigInteger("6")));
+
+
+    }
+
+    @Test
+    void solvePart2() {
+        List<String> list = readLines(HauntedWastelandTest.class.getResourceAsStream("/day08/day8_input.txt"), UTF_8);
+
+        BigInteger solve = solver.solvePart2ByCountingThe(list);
+
+        assertThat(solve, greaterThan(new BigInteger("1817704797")));
+
+        System.out.println(solve);
 
     }
 }
