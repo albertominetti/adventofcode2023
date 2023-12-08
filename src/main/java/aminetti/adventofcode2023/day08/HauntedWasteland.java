@@ -5,7 +5,6 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static aminetti.adventofcode2023.day08.HauntedWasteland.LeftRight.*;
-import static java.util.stream.Collectors.groupingBy;
+import static aminetti.adventofcode2023.day08.HauntedWasteland.LeftRight.of;
 
 public class HauntedWasteland {
     private static final Logger LOGGER = LoggerFactory.getLogger(HauntedWasteland.class);
@@ -43,8 +41,8 @@ public class HauntedWasteland {
         return map;
     }
 
-    @Deprecated
-    public long solve2(List<String> lines) {
+    @Deprecated // too slow!
+    public long solvePart2MovingSynchnonouslyInThePaths(List<String> lines) {
         char[] moves = getMoves(lines.get(0));
         LOGGER.info("Expected moves: {}", moves);
 
@@ -74,7 +72,7 @@ public class HauntedWasteland {
     }
 
 
-    public BigInteger solvePart2ByCountingThe(List<String> lines) {
+    public BigInteger solvePart2UsingTheLeastCommonMultiple(List<String> lines) {
         char[] moves = getMoves(lines.get(0));
         LOGGER.info("Expected moves: {}", moves);
 
@@ -84,18 +82,12 @@ public class HauntedWasteland {
         List<String> currPositions = map.keySet().stream().filter(HauntedWasteland::ghostStartPosition).collect(Collectors.toList());
         LOGGER.info("Current positions {}", currPositions);
 
-
-        List<Integer> collect = currPositions.stream()
+        return currPositions.stream()
                 .unordered().parallel()
                 .map(p -> countSteps(map, moves, p, HauntedWasteland::ghostEndPosition))
-                .toList();
+                .map(BigInteger::valueOf)
+                .reduce(BigInteger.ONE, HauntedWasteland::lcm);
 
-        LOGGER.info("Current steps {}", currPositions);
-
-        BigInteger reduce = collect.stream().map(BigInteger::valueOf).reduce(BigInteger.ONE, HauntedWasteland::lcm);
-
-
-        return reduce;
     }
 
     public static BigInteger lcm(BigInteger number1, BigInteger number2) {
@@ -104,6 +96,7 @@ public class HauntedWasteland {
         return absProduct.divide(gcd);
     }
 
+    @Deprecated
     private boolean allAtEndingPosition(List<String> currPositions) {
         return currPositions.stream().allMatch(HauntedWasteland::ghostEndPosition);
     }
@@ -128,7 +121,8 @@ public class HauntedWasteland {
         return countSteps(map, moves, currPosition, (p) -> StringUtils.equals(p, "ZZZ"));
     }
 
-    private int countSteps(Map<String, LeftRight> map, char[] moves, String currPosition, Predicate<String> isEndingPosition) {
+    private int countSteps(Map<String, LeftRight> map, char[] moves, String currPosition,
+                           Predicate<String> isEndingPosition) {
         int steps = 0;
 
         LeftRight currCrossroad = map.get(currPosition);

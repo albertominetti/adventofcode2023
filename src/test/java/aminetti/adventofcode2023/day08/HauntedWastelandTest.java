@@ -1,6 +1,5 @@
 package aminetti.adventofcode2023.day08;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -79,7 +78,7 @@ class HauntedWastelandTest {
                 "XXX = (XXX, XXX)"
         );
 
-        long solve = solver.solve2(testInput);
+        long solve = solver.solvePart2MovingSynchnonouslyInThePaths(testInput);
 
         assertThat(solve, is(6L));
 
@@ -102,7 +101,7 @@ class HauntedWastelandTest {
                 "XXX = (XXX, XXX)"
         );
 
-        BigInteger solve = solver.solvePart2ByCountingThe(testInput);
+        BigInteger solve = solver.solvePart2UsingTheLeastCommonMultiple(testInput);
 
         assertThat(solve, is(new BigInteger("6")));
 
@@ -113,7 +112,7 @@ class HauntedWastelandTest {
     void solvePart2() {
         List<String> list = readLines(HauntedWastelandTest.class.getResourceAsStream("/day08/day8_input.txt"), UTF_8);
 
-        BigInteger solve = solver.solvePart2ByCountingThe(list);
+        BigInteger solve = solver.solvePart2UsingTheLeastCommonMultiple(list);
 
         assertThat(solve, greaterThan(new BigInteger("1817704797")));
 
