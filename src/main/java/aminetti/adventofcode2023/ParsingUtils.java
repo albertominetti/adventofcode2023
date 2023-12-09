@@ -11,7 +11,7 @@ public class ParsingUtils {
 
     public static List<Long> readNumbers(String line) {
         List<Long> results = new ArrayList<>();
-        Pattern pattern = Pattern.compile("(\\d+)");
+        Pattern pattern = Pattern.compile("(-?\\d+)");
 
         Matcher matcher = pattern.matcher(line);
 
