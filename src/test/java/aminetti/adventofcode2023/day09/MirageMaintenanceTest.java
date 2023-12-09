@@ -23,14 +23,14 @@ class MirageMaintenanceTest {
 
     @Test
     void solve() {
-        long solve = solver.solve(testInput);
+        long solve = solver.solvePart1(testInput);
 
         assertThat(solve, is(114L));
     }
 
     @Test
     void forecast() {
-        long solve = solver.forecastLastOne(readNumbers("0 3 6 9 12 15"));
+        long solve = solver.forecastFuture(readNumbers("0 3 6 9 12 15"));
 
         assertThat(solve, is(18L));
     }
@@ -39,11 +39,11 @@ class MirageMaintenanceTest {
     void solvePart1() {
         List<String> list = readLines(MirageMaintenanceTest.class.getResourceAsStream("/day09/day9_input.txt"), UTF_8);
 
-        long solve = solver.solve(list);
+        long solve = solver.solvePart1(list);
 
         assertThat(solve, lessThan(2013149021L));
         assertThat(solve, lessThan(1974232257L));
-        assertThat(solve,       is(1974232257L));
+        assertThat(solve, is(1974232246L));
 
     }
 
@@ -51,10 +51,18 @@ class MirageMaintenanceTest {
     void solvePart2() {
         List<String> list = readLines(MirageMaintenanceTest.class.getResourceAsStream("/day09/day9_input.txt"), UTF_8);
 
-        long solve = solver.solve2(list);
+        long solve = solver.solvePart2(list);
 
-        assertThat(solve,       is(928L));
+        assertThat(solve, is(928L));
 
+    }
+
+
+    @Test
+    void slidingZip() {
+        List<Long> longs = MirageMaintenance.calculateDeltas(readNumbers("0 3 6 9 12 15"));
+
+        assertThat(longs, is(List.of(3L, 3L, 3L, 3L, 3L)));
     }
 
 }
