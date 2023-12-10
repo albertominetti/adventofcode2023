@@ -8,8 +8,7 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 class PipeMazeTest {
 
@@ -150,6 +149,38 @@ class PipeMazeTest {
 
         assertThat(solve, is(not(26L)));
         assertThat(solve, is(7097L));
+
+    }
+
+    @Test
+    void solvePart2TestData() {
+        List<String> list = List.of(
+                "FF7FSF7F7F7F7F7F---7",
+                "L|LJ||||||||||||F--J",
+                "FL-7LJLJ||||||LJL-77",
+                "F--JF--7||LJLJIF7FJ-",
+                "L---JF-JLJIIIIFJLJJ7",
+                "|F|F-JF---7IIIL7L|7|",
+                "|FFJF7L7F-JF7IIL---7",
+                "7-L-JL7||F7|L7F-7F7|",
+                "L.L7LFJ|||||FJL7||LJ",
+                "L7JLJL-JLJLJL--JLJ.L");
+
+        long solve = solver.solvePart2(list);
+
+        assertThat(solve, is(10L));
+
+    }
+    
+    @Test
+    void solvePart2() {
+        List<String> list = readLines(PipeMazeTest.class.getResourceAsStream("/day10/day10_input.txt"), UTF_8);
+
+        long solve = solver.solvePart2(list);
+
+        assertThat(solve, lessThan(4800L));
+        assertThat(solve, lessThan(600L));
+        assertThat(solve, is(600L));
 
     }
 

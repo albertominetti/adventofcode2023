@@ -1,48 +1,136 @@
 package aminetti.adventofcode2023.day10;
 
+import aminetti.adventofcode2023.day03.MissingPartForEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PipeMaze {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipeMaze.class);
     private static final int HARD_LIMIT = Integer.MAX_VALUE;
 
-    public char[] getMoves(String movesInList) {
-        return movesInList.toCharArray();
-    }
+    int rows, cols;
 
 
-    public long solve(List<String> lines) {
-        char[] moves = getMoves(lines.get(0));
-        LOGGER.info("Expected moves: {}", moves);
-        return 0;
-    }
-
-    boolean[][] visited;
+    boolean[][] visited, visited2;
+    int[][] groups;
+    Map<Integer, Integer> groupSize;
+    Set<Integer> externalGroups;
     int pipeLength = 0;
     char[][] maze;
 
     public long solvePart1(List<String> lines) {
         maze = readMaze(lines);
-        Coordinate animalCoords = findAnimal(maze);
-
         visited = new boolean[maze.length][maze[0].length];
 
+        Coordinate animalCoords = findAnimal(maze);
+        visited[animalCoords.row()][animalCoords.col()] = true;
 
         List<Coordinate> startAndEnd = findStartAndEnd(maze, animalCoords);
-        LOGGER.info("Start and end {}", startAndEnd);
+        LOGGER.debug("Start and end {}", startAndEnd);
 
-        //dfs(start);
+        visitAndCount(startAndEnd);
+
+        return (pipeLength + 1) / 2 + 1;
+    }
 
 
+    public long solvePart2(List<String> lines) {
+        solvePart1(lines);
+
+        return findEnclosedArea();
+    }
+
+    private int findEnclosedArea() {
+        visited2 = new boolean[maze.length][maze[0].length];
+        for (int i = 0; i < visited.length; i++)
+            visited2[i] = visited[i].clone();
+
+        groups = new int[maze.length][maze[0].length];
+        groupSize = new HashMap<>();
+        externalGroups = new HashSet<>();
+
+        int group = 0;
+        int totalInnerSize = 0;
+        for (int i = 0; i < maze.length; i++) {
+            for (int j = 0; j < maze[0].length; j++) {
+                if (visited2[i][j]) continue;
+                Coordinate c = new Coordinate(i, j);
+                LOGGER.info("Starting to visit {} for group {}", c, group);
+                int size = dfs2(c, group);
+                groupSize.put(group, size);
+                if (!externalGroups.contains(group)) {
+                    LOGGER.info("Found a group {} internal to pipes, with size {}", group, size);
+                    totalInnerSize += size;
+                }
+
+                group++;
+
+            }
+        }
+
+        LOGGER.info("Total groups: {}", group);
+        Map<Integer, Integer> groupSizeFilteredOnlyInternals = groupSize.entrySet().stream()
+                .filter(e -> !externalGroups.contains(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        LOGGER.info("Group sizes for internal groups {}", groupSizeFilteredOnlyInternals);
+        LOGGER.info("External groups: {}", externalGroups);
+        LOGGER.info("Total size of internal groups: {}", totalInnerSize);
+
+        System.out.println("TOT: " + groupSizeFilteredOnlyInternals.values().stream().mapToInt(z -> z).sum());
+
+        return totalInnerSize;
+    }
+
+    private int dfs2(Coordinate c, int g) {
+
+        LOGGER.info("Checking {} for group {}", c, g);
+
+        // responsible for: grouping the spaces; count size; check if external groups
+        int row = c.row();
+        int col = c.col();
+        if (visited2[row][col]) return 0;
+        visited2[row][col] = true;
+
+        groups[row][col] = g; // set the group
+
+        List<Coordinate> directions = List.of(
+                new Coordinate(-1, -1), new Coordinate(-1, 0), new Coordinate(-1, 1),
+                new Coordinate(0, -1), new Coordinate(0, 1),
+                new Coordinate(1, -1), new Coordinate(1, 0), new Coordinate(1, 1)
+        );
+
+        int nearBySize = 0;
+        for (Coordinate direction : directions) {
+
+            int i = row - direction.row();
+            int j = col - direction.col();
+
+            if (i < 0 || i >= rows || j < 0 || j >= cols) {
+                LOGGER.info("Group {} is marked as external", g);
+                externalGroups.add(g); // mark as external group
+                break;
+            }
+
+            if (!visited2[i][j]) {
+                nearBySize += dfs2(new Coordinate(i, j), g); // count the near tiles
+            }
+        }
+
+
+        return nearBySize + 1;
+    }
+
+    private void visitAndCount(List<Coordinate> startAndEnd) {
         Coordinate start = startAndEnd.get(0);
+        visited[start.row()][start.col()] = true;
         Coordinate end = startAndEnd.get(1);
+        visited[end.row()][end.col()] = true;
         Coordinate c = start;
         while (!c.equals(end) && pipeLength < HARD_LIMIT) {
-            LOGGER.info("Looking in {}", c);
+            LOGGER.debug("Looking in {}", c);
 
             visited[c.row()][c.col()] = true;
             pipeLength++;
@@ -50,25 +138,30 @@ public class PipeMaze {
             char currShape = maze[c.row()][c.col()];
 
             if (allowsNorth(currShape) && canMoveNorth(maze, c) && !visited[c.row() - 1][c.col]) {
-                LOGGER.info("Going UP.");
+                LOGGER.debug("Going UP.");
                 c = new Coordinate(c.row() - 1, c.col());
             } else if (allowsSouth(currShape) && canMoveSouth(maze, c) && !visited[c.row() + 1][c.col]) {
-                LOGGER.info("Going DOWN.");
+                LOGGER.debug("Going DOWN.");
                 c = new Coordinate(c.row() + 1, c.col());
             } else if (allowsWest(currShape) && canMoveWest(maze, c) && !visited[c.row()][c.col - 1]) {
-                LOGGER.info("Going LEFT.");
+                LOGGER.debug("Going LEFT.");
                 c = new Coordinate(c.row(), c.col() - 1);
             } else if (allowsEast(currShape) && canMoveEast(maze, c) && !visited[c.row()][c.col + 1]) {
-                LOGGER.info("Going RIGHT.");
+                LOGGER.debug("Going RIGHT.");
                 c = new Coordinate(c.row(), c.col() + 1);
             } else {
                 break;
             }
-
-
         }
 
-        return (pipeLength + 1) / 2 + 1;
+        System.out.println();
+        for (int i = 0; i < rows; i++) {
+            System.out.println();
+            for (int j = 0; j < cols; j++) {
+                System.out.print(visited[i][j] ? "8" : " ");
+            }
+        }
+        System.out.println();
     }
 
     @Deprecated
@@ -167,6 +260,8 @@ public class PipeMaze {
     }
 
     public char[][] readMaze(List<String> lines) {
+        rows = lines.size();
+        cols = lines.get(0).length();
         char[][] maze = new char[lines.size()][];
         for (int i = 0; i < lines.size(); i++) {
             maze[i] = lines.get(i).toCharArray();
