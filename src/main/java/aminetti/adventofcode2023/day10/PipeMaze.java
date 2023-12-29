@@ -1,184 +1,159 @@
 package aminetti.adventofcode2023.day10;
 
-import aminetti.adventofcode2023.day03.MissingPartForEngine;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static com.google.common.collect.Sets.newHashSet;
 
 public class PipeMaze {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipeMaze.class);
     private static final int HARD_LIMIT = Integer.MAX_VALUE;
 
-    int rows, cols;
+    private final int rows, cols;
+    private final char[][] maze;
 
-
-    boolean[][] visited, visited2;
-    int[][] groups;
-    Map<Integer, Integer> groupSize;
-    Set<Integer> externalGroups;
+    boolean[][] loop;
     int pipeLength = 0;
-    char[][] maze;
 
-    public long solvePart1(List<String> lines) {
+    public PipeMaze(List<String> lines) {
+        rows = lines.size();
+        cols = lines.get(0).length();
         maze = readMaze(lines);
-        visited = new boolean[maze.length][maze[0].length];
 
-        Coordinate animalCoords = findAnimal(maze);
-        visited[animalCoords.row()][animalCoords.col()] = true;
+        loop = new boolean[maze.length][maze[0].length];
+    }
 
-        List<Coordinate> startAndEnd = findStartAndEnd(maze, animalCoords);
-        LOGGER.debug("Start and end {}", startAndEnd);
+    public long solvePart1() {
 
-        visitAndCount(startAndEnd);
+        Coordinate animalCoords = findAnimal();
+        loop[animalCoords.row()][animalCoords.col()] = true;
+
+        List<Coordinate> startAndEnd = findStartAndEnd(animalCoords);
+        LOGGER.info("Start and end {}", startAndEnd);
+
+        visitAndCount(startAndEnd.get(0), startAndEnd.get(1));
 
         return (pipeLength + 1) / 2 + 1;
     }
 
 
-    public long solvePart2(List<String> lines) {
-        solvePart1(lines);
+    public long solvePart2() {
+        solvePart1();
 
-        return findEnclosedArea();
+        int area = findInnerArea();
+        print();
+
+        LOGGER.info("Area: {}", area);
+
+        return area;
     }
 
-    private int findEnclosedArea() {
-        visited2 = new boolean[maze.length][maze[0].length];
-        for (int i = 0; i < visited.length; i++)
-            visited2[i] = visited[i].clone();
-
-        groups = new int[maze.length][maze[0].length];
-        groupSize = new HashMap<>();
-        externalGroups = new HashSet<>();
-
-        int group = 0;
-        int totalInnerSize = 0;
+    private int findInnerArea() {
+        int enclosingArea = 0;
         for (int i = 0; i < maze.length; i++) {
+            int crossingPipe = 0;
+            Character initialHorizPipe = null;
             for (int j = 0; j < maze[0].length; j++) {
-                if (visited2[i][j]) continue;
-                Coordinate c = new Coordinate(i, j);
-                LOGGER.info("Starting to visit {} for group {}", c, group);
-                int size = dfs2(c, group);
-                groupSize.put(group, size);
-                if (!externalGroups.contains(group)) {
-                    LOGGER.info("Found a group {} internal to pipes, with size {}", group, size);
-                    totalInnerSize += size;
+
+                if (!loop[i][j]) {
+                    if (crossingPipe % 2 != 0) {
+                        enclosingArea++;
+                    }
+                } else {
+                    switch (maze[i][j]) {
+                        case '|' -> {
+                            assert initialHorizPipe == null;
+                            crossingPipe++;
+                        }
+                        case 'F' -> initialHorizPipe = 'F';
+                        case 'L' -> initialHorizPipe = 'L';
+                        case '-' -> {
+                            assert initialHorizPipe != null;
+                        }
+                        case '7' -> {
+                            if (initialHorizPipe == 'L') crossingPipe++;
+                            initialHorizPipe = null;
+                        }
+                        case 'J' -> {
+                            if (initialHorizPipe == 'F') crossingPipe++;
+                            initialHorizPipe = null;
+                        }
+                        default -> throw new IllegalArgumentException("The loop cannot contain other characters.");
+                    }
                 }
-
-                group++;
-
             }
+            assert crossingPipe % 2 == 0;
         }
-
-        LOGGER.info("Total groups: {}", group);
-        Map<Integer, Integer> groupSizeFilteredOnlyInternals = groupSize.entrySet().stream()
-                .filter(e -> !externalGroups.contains(e.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        LOGGER.info("Group sizes for internal groups {}", groupSizeFilteredOnlyInternals);
-        LOGGER.info("External groups: {}", externalGroups);
-        LOGGER.info("Total size of internal groups: {}", totalInnerSize);
-
-        System.out.println("TOT: " + groupSizeFilteredOnlyInternals.values().stream().mapToInt(z -> z).sum());
-
-        return totalInnerSize;
+        return enclosingArea;
     }
 
-    private int dfs2(Coordinate c, int g) {
-
-        LOGGER.info("Checking {} for group {}", c, g);
-
-        // responsible for: grouping the spaces; count size; check if external groups
-        int row = c.row();
-        int col = c.col();
-        if (visited2[row][col]) return 0;
-        visited2[row][col] = true;
-
-        groups[row][col] = g; // set the group
-
-        List<Coordinate> directions = List.of(
-                new Coordinate(-1, -1), new Coordinate(-1, 0), new Coordinate(-1, 1),
-                new Coordinate(0, -1), new Coordinate(0, 1),
-                new Coordinate(1, -1), new Coordinate(1, 0), new Coordinate(1, 1)
-        );
-
-        int nearBySize = 0;
-        for (Coordinate direction : directions) {
-
-            int i = row - direction.row();
-            int j = col - direction.col();
-
-            if (i < 0 || i >= rows || j < 0 || j >= cols) {
-                LOGGER.info("Group {} is marked as external", g);
-                externalGroups.add(g); // mark as external group
-                break;
-            }
-
-            if (!visited2[i][j]) {
-                nearBySize += dfs2(new Coordinate(i, j), g); // count the near tiles
-            }
-        }
-
-
-        return nearBySize + 1;
-    }
-
-    private void visitAndCount(List<Coordinate> startAndEnd) {
-        Coordinate start = startAndEnd.get(0);
-        visited[start.row()][start.col()] = true;
-        Coordinate end = startAndEnd.get(1);
-        visited[end.row()][end.col()] = true;
+    private void visitAndCount(Coordinate start, Coordinate end) {
         Coordinate c = start;
         while (!c.equals(end) && pipeLength < HARD_LIMIT) {
             LOGGER.debug("Looking in {}", c);
 
-            visited[c.row()][c.col()] = true;
+            loop[c.row()][c.col()] = true;
             pipeLength++;
 
             char currShape = maze[c.row()][c.col()];
 
-            if (allowsNorth(currShape) && canMoveNorth(maze, c) && !visited[c.row() - 1][c.col]) {
+            if (allowsNorth(currShape) && canMoveNorth(maze, c) && !loop[c.row() - 1][c.col]) {
                 LOGGER.debug("Going UP.");
                 c = new Coordinate(c.row() - 1, c.col());
-            } else if (allowsSouth(currShape) && canMoveSouth(maze, c) && !visited[c.row() + 1][c.col]) {
+            } else if (allowsSouth(currShape) && canMoveSouth(maze, c) && !loop[c.row() + 1][c.col]) {
                 LOGGER.debug("Going DOWN.");
                 c = new Coordinate(c.row() + 1, c.col());
-            } else if (allowsWest(currShape) && canMoveWest(maze, c) && !visited[c.row()][c.col - 1]) {
+            } else if (allowsWest(currShape) && canMoveWest(maze, c) && !loop[c.row()][c.col - 1]) {
                 LOGGER.debug("Going LEFT.");
                 c = new Coordinate(c.row(), c.col() - 1);
-            } else if (allowsEast(currShape) && canMoveEast(maze, c) && !visited[c.row()][c.col + 1]) {
+            } else if (allowsEast(currShape) && canMoveEast(maze, c) && !loop[c.row()][c.col + 1]) {
                 LOGGER.debug("Going RIGHT.");
                 c = new Coordinate(c.row(), c.col() + 1);
             } else {
                 break;
             }
         }
+        loop[end.row()][end.col()] = true;
 
+    }
+
+    private void print() {
         System.out.println();
         for (int i = 0; i < rows; i++) {
             System.out.println();
             for (int j = 0; j < cols; j++) {
-                System.out.print(visited[i][j] ? "8" : " ");
+                System.out.print(loop[i][j] ? maze[i][j] : ".");
             }
         }
         System.out.println();
     }
 
-    @Deprecated
-    public Coordinate findOnePipeNearAnimal(char[][] maze, Coordinate c) {
-        if (canMoveNorth(maze, c)) return new Coordinate(c.row() - 1, c.col());
-        if (canMoveSouth(maze, c)) return new Coordinate(c.row() + 1, c.col());
-        if (canMoveWest(maze, c)) return new Coordinate(c.row(), c.col() - 1);
-        if (canMoveEast(maze, c)) return new Coordinate(c.row(), c.col() + 1);
-        throw new IllegalArgumentException("The animal can't move.");
-    }
 
-    public List<Coordinate> findStartAndEnd(char[][] maze, Coordinate c) {
+    public List<Coordinate> findStartAndEnd(Coordinate c) {
+        Set<Character> possibileValues = newHashSet('|', 'J', '-', 'L', '7', 'F');
         List<Coordinate> startAndEnd = new ArrayList<>(2);
-        if (canMoveNorth(maze, c)) startAndEnd.add(new Coordinate(c.row() - 1, c.col()));
-        if (canMoveSouth(maze, c)) startAndEnd.add(new Coordinate(c.row() + 1, c.col()));
-        if (canMoveWest(maze, c)) startAndEnd.add(new Coordinate(c.row(), c.col() - 1));
-        if (canMoveEast(maze, c)) startAndEnd.add(new Coordinate(c.row(), c.col() + 1));
+        if (canMoveNorth(maze, c)) {
+            startAndEnd.add(new Coordinate(c.row() - 1, c.col()));
+            possibileValues.removeAll(newHashSet('-', '7', 'F'));
+        }
+        if (canMoveSouth(maze, c)) {
+            startAndEnd.add(new Coordinate(c.row() + 1, c.col()));
+            possibileValues.removeAll(newHashSet('J', '-', 'L'));
+        }
+        if (canMoveWest(maze, c)) {
+            startAndEnd.add(new Coordinate(c.row(), c.col() - 1));
+            possibileValues.removeAll(newHashSet('F', '|', 'L'));
+        }
+        if (canMoveEast(maze, c)) {
+            startAndEnd.add(new Coordinate(c.row(), c.col() + 1));
+            possibileValues.removeAll(newHashSet('|', '7', 'J'));
+        }
+        maze[c.row][c.col] = Iterables.getOnlyElement(possibileValues);
         return startAndEnd;
     }
 
@@ -217,14 +192,14 @@ public class PipeMaze {
     @Deprecated
     private void dfs(Coordinate c) {
         LOGGER.debug("DFS in {}", c);
-        if (visited[c.row()][c.col()]) {
+        if (loop[c.row()][c.col()]) {
             LOGGER.debug("Skip {} because already visited.", c);
             return;
         }
 
         LOGGER.info("DFS in {}", c);
 
-        visited[c.row()][c.col()] = true;
+        loop[c.row()][c.col()] = true;
         LOGGER.debug("Mark {} as visited.", c);
 
         if (maze[c.row()][c.col()] == 'S') {
@@ -259,9 +234,7 @@ public class PipeMaze {
         return currShape == 'L' || currShape == '-' || currShape == 'F';
     }
 
-    public char[][] readMaze(List<String> lines) {
-        rows = lines.size();
-        cols = lines.get(0).length();
+    public static char[][] readMaze(List<String> lines) {
         char[][] maze = new char[lines.size()][];
         for (int i = 0; i < lines.size(); i++) {
             maze[i] = lines.get(i).toCharArray();
@@ -270,7 +243,7 @@ public class PipeMaze {
         return maze;
     }
 
-    public Coordinate findAnimal(char[][] maze) {
+    public Coordinate findAnimal() {
         for (int i = 0; i < maze.length; i++) {
             for (int j = 0; j < maze[0].length; j++) {
                 //LOGGER.info("Position: {},{}", i, j);

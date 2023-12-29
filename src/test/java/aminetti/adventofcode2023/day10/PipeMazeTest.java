@@ -12,8 +12,6 @@ import static org.hamcrest.Matchers.*;
 
 class PipeMazeTest {
 
-    PipeMaze solver = new PipeMaze();
-
     List<String> testInput = List.of(
             "7-F7-",
             ".FJ|7",
@@ -22,10 +20,9 @@ class PipeMazeTest {
             "LJ.LJ"
     );
 
-
     @Test
     void readInput() {
-        char[][] maze = solver.readMaze(testInput);
+        char[][] maze = PipeMaze.readMaze(testInput);
 
         assertThat(maze[0][0], is('7'));
         assertThat(maze[3][3], is('-'));
@@ -36,34 +33,19 @@ class PipeMazeTest {
 
     @Test
     void findAnimal() {
-        char[][] maze = solver.readMaze(testInput);
-
-        Coordinate coords = solver.findAnimal(maze);
+        PipeMaze solver = new PipeMaze(testInput);
+        Coordinate coords = solver.findAnimal();
 
         assertThat(coords.row(), is(2));
         assertThat(coords.col(), is(0));
     }
 
     @Test
-    void findPipeNearAnimal() {
-        char[][] maze = solver.readMaze(testInput);
-
-        Coordinate animal = solver.findAnimal(maze);
-        Coordinate nearPipe = solver.findOnePipeNearAnimal(maze, animal);
-
-        System.out.println(nearPipe);
-
-        assertThat(nearPipe.row(), is(3));
-        assertThat(nearPipe.col(), is(0));
-    }
-
-
-    @Test
     void findStartAndEnd() {
-        char[][] maze = solver.readMaze(testInput);
 
-        Coordinate animal = solver.findAnimal(maze);
-        List<Coordinate> startAndEnd = solver.findStartAndEnd(maze, animal);
+        PipeMaze solver = new PipeMaze(testInput);
+        Coordinate animal = solver.findAnimal();
+        List<Coordinate> startAndEnd = solver.findStartAndEnd(animal);
 
         System.out.println(startAndEnd);
 
@@ -75,57 +57,12 @@ class PipeMazeTest {
         assertThat(startAndEnd.get(1).col(), is(1));
     }
 
-
-    @Test
-    void findPipeNearAnimalBis() {
-
-        List<String> testInput = List.of(
-                "7-F7-",
-                ".FJ|7",
-                "SJLL7",
-                "FF--J",
-                "LJ.LJ"
-        );
-        char[][] maze = solver.readMaze(testInput);
-
-        Coordinate animal = solver.findAnimal(maze);
-        Coordinate nearPipe = solver.findOnePipeNearAnimal(maze, animal);
-
-        System.out.println("Coordinate: " + nearPipe + " shape: " + maze[nearPipe.row()][nearPipe.col()]);
-
-        assertThat(nearPipe.row(), is(2));
-        assertThat(nearPipe.col(), is(1));
-    }
-
-    @Test
-    void findPipeNearAnimalTris() {
-
-        List<String> testInput = List.of(
-                "7-F7-",
-                ".FJ|7",
-                "S-LL7",
-                "FF--J",
-                "LJ.LJ"
-        );
-        char[][] maze = solver.readMaze(testInput);
-
-        Coordinate animal = solver.findAnimal(maze);
-        Coordinate nearPipe = solver.findOnePipeNearAnimal(maze, animal);
-
-        System.out.println("Coordinate: " + nearPipe + " shape: " + maze[nearPipe.row()][nearPipe.col()]);
-
-        assertThat(nearPipe.row(), is(2));
-        assertThat(nearPipe.col(), is(1));
-    }
-
-
     @Test
     void findAnimalRealInput() {
         List<String> list = readLines(PipeMazeTest.class.getResourceAsStream("/day10/day10_input.txt"), UTF_8);
 
-        char[][] maze = solver.readMaze(list);
-
-        Coordinate coords = solver.findAnimal(maze);
+        PipeMaze solver = new PipeMaze(list);
+        Coordinate coords = solver.findAnimal();
         System.out.println(coords);
 
         assertThat(coords.row(), is(112));
@@ -135,7 +72,8 @@ class PipeMazeTest {
 
     @Test
     void solve() {
-        long solve = solver.solvePart1(testInput);
+        PipeMaze solver = new PipeMaze(testInput);
+        long solve = solver.solvePart1();
 
         assertThat(solve, is(8L));
     }
@@ -145,7 +83,8 @@ class PipeMazeTest {
     void solvePart1() {
         List<String> list = readLines(PipeMazeTest.class.getResourceAsStream("/day10/day10_input.txt"), UTF_8);
 
-        long solve = solver.solvePart1(list);
+        PipeMaze solver = new PipeMaze(list);
+        long solve = solver.solvePart1();
 
         assertThat(solve, is(not(26L)));
         assertThat(solve, is(7097L));
@@ -166,21 +105,23 @@ class PipeMazeTest {
                 "L.L7LFJ|||||FJL7||LJ",
                 "L7JLJL-JLJLJL--JLJ.L");
 
-        long solve = solver.solvePart2(list);
+        PipeMaze solver = new PipeMaze(list);
+        long solve = solver.solvePart2();
 
         assertThat(solve, is(10L));
 
     }
-    
+
     @Test
     void solvePart2() {
         List<String> list = readLines(PipeMazeTest.class.getResourceAsStream("/day10/day10_input.txt"), UTF_8);
 
-        long solve = solver.solvePart2(list);
+        PipeMaze solver = new PipeMaze(list);
+        long solve = solver.solvePart2();
 
         assertThat(solve, lessThan(4800L));
         assertThat(solve, lessThan(600L));
-        assertThat(solve, is(600L));
+        assertThat(solve, is(355L));
 
     }
 
