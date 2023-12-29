@@ -18,11 +18,13 @@ public class Day11 {
     private final List<String> image;
     private final int rows;
     private final int cols;
+    private final int expandBy;
 
-    public Day11(List<String> image) {
+    public Day11(List<String> image, int expandBy) {
         this.image = image;
         rows = image.size();
         cols = image.get(0).length();
+        this.expandBy = expandBy;
         galaxies = readGalaxies();
 
 
@@ -41,7 +43,7 @@ public class Day11 {
         return galaxies;
     }
 
-    public long solvePart1() {
+    public long solve() {
 
         Collection<Integer> emptyCols = CollectionUtils.subtract(
                 IntStream.range(0, cols).boxed().collect(toSet()),
@@ -52,7 +54,7 @@ public class Day11 {
                 galaxies.stream().map(g -> g.x).collect(toSet()));
         LOGGER.info("Empty cols: {}; Empty rows: {}", emptyCols, emptyRows);
 
-        int totalDistance = 0;
+        long totalDistance = 0;
         for (int i = 0; i < galaxies.size(); i++) {
             for (int j = i + 1; j < galaxies.size(); j++) {
 
@@ -66,7 +68,7 @@ public class Day11 {
 
                 LOGGER.info("Distance from {} and {} is {} with {} extra cols and {} extra rows", g1, g2, distance, extraCols, extraRows);
 
-                totalDistance += distance + extraCols + extraRows;
+                totalDistance += distance + (extraCols + extraRows) * (expandBy - 1);
             }
         }
 

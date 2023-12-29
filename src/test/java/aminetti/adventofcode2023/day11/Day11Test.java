@@ -26,29 +26,46 @@ class Day11Test {
 
     @Test
     void solvePart1TestData() {
-        Day11 solver = new Day11(testInput);
-        long solve = solver.solvePart1();
+        Day11 solver = new Day11(testInput, 2);
+        long solve = solver.solve();
 
-        assertThat(solve, is(374));
+        assertThat(solve, is(374L));
     }
+
+    @Test
+    void solvePart2TestData() {
+        Day11 solver = new Day11(testInput, 10);
+        long solve = solver.solve();
+
+        assertThat(solve, is(1030L));
+    }
+
+    @Test
+    void solvePart2TestDataBis() {
+        Day11 solver = new Day11(testInput, 100);
+        long solve = solver.solve();
+
+        assertThat(solve, is(8410L));
+    }
+
 
     @Test
     void solvePart1() {
         List<String> list = readLines(Day11Test.class.getResourceAsStream("/day11/day11_input.txt"), UTF_8);
-        Day11 solver = new Day11(list);
-        long solve = solver.solvePart1();
+        Day11 solver = new Day11(list, 2);
+        long solve = solver.solve();
 
-        assertThat(solve, is(2L));
+        assertThat(solve, is(9681886L));
     }
 
     @Test
     void solvePart2() {
         List<String> list = readLines(Day11Test.class.getResourceAsStream("/day11/day11_input.txt"), UTF_8);
+        Day11 solver = new Day11(list, 1000000);
+        long solve = solver.solve();
 
-//        long solve = solver.solve(list);
-//
-//        assertThat(solve, is(2L));
-
+        assertThat(solve, is(791134099634L));
     }
+
 
 }
