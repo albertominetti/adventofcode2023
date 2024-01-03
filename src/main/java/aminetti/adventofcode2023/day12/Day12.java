@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 public class Day12 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Day11.class);
@@ -24,43 +24,44 @@ public class Day12 {
     }
 
     public static int calc(String conditions, List<Integer> groups) {
-        return calc(conditions, groups, "");
+        return calc(conditions, groups, 0, "");
     }
 
-    public static int calc(String s, List<Integer> groups, String current) {
+    public static int calc(String s, List<Integer> groups, int gIndex, String current) {
         LOGGER.info("Running for: {} and {}", s, groups);
-        if (s.length() == 0 && groups.isEmpty()) {
+        if (s.length() == 0 && groups.size() == gIndex) {
             LOGGER.info("+1 for {}", current);
             return 1;
         }
         if (s.length() > 0) {
-            if (s.charAt(0) == '.') return whenOperational(s, groups, current);
+            if (s.charAt(0) == '.') return whenOperational(s, groups, gIndex, current);
 
-            if (s.charAt(0) == '#') return whenDamaged(s, groups, current);
-            if (s.charAt(0) == '?') return whenDamaged(s, groups, current) + whenOperational(s, groups, current);
+            if (s.charAt(0) == '#') return whenDamaged(s, groups, gIndex, current);
+            if (s.charAt(0) == '?')
+                return whenDamaged(s, groups, gIndex, current) + whenOperational(s, groups, gIndex, current);
 
         }
         return 0;
     }
 
-    private static int whenDamaged(String s, List<Integer> groups, String current) {
-        if (groups.isEmpty()) return 0;
+    private static int whenDamaged(String s, List<Integer> groups, int gIndex, String current) {
+        if (groups.size() == gIndex) return 0;
 
-        Integer nextGroup = groups.get(0);
+        Integer nextGroup = groups.get(gIndex);
         if (s.length() < nextGroup) return 0;
         if (s.substring(0, nextGroup).contains(".")) return 0;
 
         String newString = s.substring(nextGroup);
         if (newString.length() > 0) {
             if (newString.charAt(0) == '#') return 0;
-            return calc(newString.substring(1), groups.subList(1, groups.size()), current + "#".repeat(nextGroup) + ".");
+            return calc(newString.substring(1), groups, gIndex + 1, current + "#".repeat(nextGroup) + ".");
         }
-        return calc(newString, groups.subList(1, groups.size()), current + "#".repeat(nextGroup));
+        return calc(newString, groups, gIndex + 1, current + "#".repeat(nextGroup));
 
     }
 
-    private static int whenOperational(String s, List<Integer> groups, String current) {
-        return calc(s.substring(1), new ArrayList<>(groups), current + ".");
+    private static int whenOperational(String s, List<Integer> groups, int gIndex, String current) {
+        return calc(s.substring(1), groups, gIndex, current + ".");
     }
 
     public static List<Conditions> readInput(List<String> input) {
