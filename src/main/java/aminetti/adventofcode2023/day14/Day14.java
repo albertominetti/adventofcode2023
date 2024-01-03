@@ -29,20 +29,21 @@ public class Day14 {
 
     public long solvePart2() {
         print();
+        char[][] previous = snapshot();
         for (int cycle = 0; cycle < 1000000000; cycle++) {
             for (int i = 0; i < 4; i++) {
                 tiltNorth();
                 rotateCw();
             }
-            rotateCw();
+            if (same(field, previous)) {
+                LOGGER.info("No more changes after {} cycles", cycle - 1);
+                break;
+            }
+            previous = snapshot();
         }
-
-
         print();
 
         return calcSum();
-
-
     }
 
     private void rotateCw() {
@@ -114,6 +115,31 @@ public class Day14 {
             }
         }
         System.out.println();
+    }
+
+
+    private char[][] snapshot() {
+        final int rows = field.length;
+        final int cols = field[0].length;
+        char[][] copy = new char[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                copy[i][j] = field[i][j];
+            }
+        }
+        return copy;
+    }
+
+    private boolean same(char[][] a, char[][] b) {
+        final int rows = a.length;
+        final int cols = a[0].length;
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (a[i][j] != b[i][j]) return false;
+            }
+        }
+        return true;
     }
 
     public static char[][] readRocks(List<String> lines) {
