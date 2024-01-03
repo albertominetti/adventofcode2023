@@ -4,47 +4,70 @@ import aminetti.adventofcode2023.day11.Day11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
 public class Day12 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Day11.class);
-    private final List<Conditions> conditions;
+    private List<Conditions> conditions;
+    private Map<Key, Long> cache = new HashMap<>();
 
 
     public Day12(List<String> input) {
         conditions = readInput(input);
     }
 
-    public int solve() {
-        return conditions.stream().mapToInt(c -> calc(c.conditions, c.groups)).sum();
+    public long solvePart2(int unfoldRatio) {
+        List<Conditions> list = new ArrayList<>();
+        for (Conditions c : conditions) {
+            Conditions c2 = new Conditions(
+                    String.join("?", Collections.nCopies(unfoldRatio, c.conditions)),
+                    Collections.nCopies(unfoldRatio, c.groups).stream().flatMap(List::stream).toList());
+
+            list.add(c2);
+        }
+        conditions = list;
+        return solve();
     }
 
-    public static int calc(String conditions, List<Integer> groups) {
+    public long solve() {
+        cache = new HashMap<>();
+        return conditions.stream().mapToLong(c -> calc(c.conditions, c.groups)).sum();
+    }
+
+    public long calc(String conditions, List<Integer> groups) {
         return calc(conditions, groups, 0, "");
     }
 
-    public static int calc(String s, List<Integer> groups, int gIndex, String current) {
-        LOGGER.info("Running for: {} and {}", s, groups);
-        if (s.length() == 0 && groups.size() == gIndex) {
-            LOGGER.info("+1 for {}", current);
-            return 1;
-        }
-        if (s.length() > 0) {
-            if (s.charAt(0) == '.') return whenOperational(s, groups, gIndex, current);
+    public long calc(String s, List<Integer> groups, int gIndex, String current) {
+        Key k = new Key(s, groups, gIndex);
+        Long result = cache.get(k);
+        if (result == null) {
 
-            if (s.charAt(0) == '#') return whenDamaged(s, groups, gIndex, current);
-            if (s.charAt(0) == '?')
-                return whenDamaged(s, groups, gIndex, current) + whenOperational(s, groups, gIndex, current);
-
+            LOGGER.trace("Running for: {} and {}", s, groups);
+            if (s.length() == 0 && groups.size() == gIndex) {
+                LOGGER.debug("+1 for {}", current);
+                result = 1L;
+            } else if (s.length() == 0 && groups.size() > gIndex) {
+                result = 0L;
+            } else if (s.length() > 0) {
+                if (s.charAt(0) == '.') {
+                    result = whenOperational(s, groups, gIndex, current);
+                } else if (s.charAt(0) == '#') {
+                    result = whenDamaged(s, groups, gIndex, current);
+                } else if (s.charAt(0) == '?') {
+                    result = whenDamaged(s, groups, gIndex, current) + whenOperational(s, groups, gIndex, current);
+                } else {
+                    throw new IllegalArgumentException("Unexpected input");
+                }
+            }
+            cache.put(k, result);
         }
-        return 0;
+        return result;
     }
 
-    private static int whenDamaged(String s, List<Integer> groups, int gIndex, String current) {
+    private long whenDamaged(String s, List<Integer> groups, int gIndex, String current) {
         if (groups.size() == gIndex) return 0;
 
         Integer nextGroup = groups.get(gIndex);
@@ -60,7 +83,7 @@ public class Day12 {
 
     }
 
-    private static int whenOperational(String s, List<Integer> groups, int gIndex, String current) {
+    private long whenOperational(String s, List<Integer> groups, int gIndex, String current) {
         return calc(s.substring(1), groups, gIndex, current + ".");
     }
 
@@ -83,5 +106,8 @@ public class Day12 {
         public String toString() {
             return conditions + " " + groups;
         }
+    }
+
+    record Key(String conditions, List<Integer> groups, Integer gIndex) {
     }
 }
