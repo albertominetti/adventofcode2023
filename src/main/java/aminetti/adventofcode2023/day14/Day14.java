@@ -4,7 +4,9 @@ import aminetti.adventofcode2023.day11.Day11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Day14 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Day11.class);
@@ -29,21 +31,47 @@ public class Day14 {
 
     public long solvePart2() {
         print();
-        char[][] previous = snapshot();
-        for (int cycle = 0; cycle < 1000000000; cycle++) {
-            for (int i = 0; i < 4; i++) {
-                tiltNorth();
-                rotateCw();
-            }
-            if (same(field, previous)) {
-                LOGGER.info("No more changes after {} cycles", cycle - 1);
+
+        List<char[][]> snapshots = new ArrayList<>();
+        char[][] repeatingShapshot = null;
+        int cycle = 1;
+        for (; cycle <= 1_000_000_000; cycle++) {
+            runFullCycle();
+            LOGGER.info("Cycle {}, sum {}", cycle, calcSum());
+            char[][] snapshot = snapshot();
+            Optional<char[][]> optionalFoundSnapshot = snapshots.stream().filter(x -> same(x, snapshot)).findAny();
+            if (optionalFoundSnapshot.isPresent()) {
+                LOGGER.info("Cycle {} has already been seen", cycle);
+                repeatingShapshot = optionalFoundSnapshot.get();
                 break;
             }
-            previous = snapshot();
+            snapshots.add(snapshot);
         }
+
+        int firstTimeSnapshot = snapshots.indexOf(repeatingShapshot);
+        int cyclesOfRepeat = snapshots.size() - firstTimeSnapshot; // maybe -1
+        LOGGER.info("Repeating changes at cycle {}", cycle);
+        LOGGER.info("Repeating changes after {} cycles", cyclesOfRepeat);
+
+        LOGGER.info("Expecting to do still {} cycles", 1_000_000_000 - cycle);
+        int modulusCycles = (1_000_000_000 - cycle) % cyclesOfRepeat;
+        LOGGER.info("That should be like {} cycles", modulusCycles);
+
+        for (int i = 1; i <= modulusCycles; i++) {
+            runFullCycle();
+            LOGGER.info("Cycle {}, sum {}", cycle + i, calcSum());
+        }
+
         print();
 
         return calcSum();
+    }
+
+    private void runFullCycle() {
+        for (int i = 0; i < 4; i++) {
+            tiltNorth();
+            rotateCw();
+        }
     }
 
     private void rotateCw() {

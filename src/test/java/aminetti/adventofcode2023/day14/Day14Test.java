@@ -47,7 +47,7 @@ class Day14Test {
     }
 
     @Test
-    void testPart2ActualInptu() {
+    void testPart2ActualInput() {
         List<String> list = readLines(Day14Test.class.getResourceAsStream("/day14/day14_input.txt"), UTF_8);
 
         Day14 solver = new Day14(list);
@@ -55,6 +55,9 @@ class Day14Test {
         long weight = solver.solvePart2();
 
         assertThat(weight, is(greaterThan(64L)));
+        assertThat(weight, is(lessThan(106699L)));
+        assertThat(weight, is(lessThan(106708L)));
+        assertThat(weight, is(64L));
     }
 
 }
