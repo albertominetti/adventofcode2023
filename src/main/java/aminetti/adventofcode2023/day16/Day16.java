@@ -23,9 +23,28 @@ public class Day16 {
 
     public long solve() {
         visitedFrom = new boolean[rows][cols][4];
+        return enlight(0, 0, RIGHT);
+    }
 
-        dfs(0, 0, RIGHT);
+    public long solvePart2() {
+        long maxVisited = 0;
+        for (int y = 0; y < cols; y++) {
+            maxVisited = Math.max(maxVisited, enlight(0, y, RIGHT));
+            maxVisited = Math.max(maxVisited, enlight(rows - 1, y, LEFT));
+        }
 
+        for (int x = 0; x < rows; x++) {
+            maxVisited = Math.max(maxVisited, enlight(x, 0, DOWN));
+            maxVisited = Math.max(maxVisited, enlight(x, cols - 1, UP));
+        }
+
+        return maxVisited;
+    }
+
+    private long enlight(int x, int y, Direction d) {
+        LOGGER.info("Starting from ({},{}) going {}", x, y, d);
+        visitedFrom = new boolean[rows][cols][4];
+        dfs(x, y, d);
         return howManyVisited();
     }
 
@@ -44,7 +63,7 @@ public class Day16 {
         if (y < 0 || y >= cols) return;
         if (visitedFrom[x][y][d.ordinal()]) return;
 
-        LOGGER.info("Going {} from ({},{})", d, x, y);
+        LOGGER.debug("Going {} from ({},{})", d, x, y);
 
         visitedFrom[x][y][d.ordinal()] = true;
 
