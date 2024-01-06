@@ -33,4 +33,25 @@ class Day15Test {
 
     }
 
+    @Test
+    void testPart2SampleInput() {
+        long l = new Day15().solveBoxes(sampleInput);
+
+        assertThat(l, is(145L));
+    }
+
+
+    @Test
+    void testPart2ActualInput() {
+        List<String> list = readLines(Day15Test.class.getResourceAsStream("/day15/day15_input.txt"), UTF_8);
+
+        Day15 solver = new Day15();
+
+        long l = solver.solveBoxes(list.getFirst());
+
+        assertThat(l, is(247763L));
+
+
+    }
+
 }
