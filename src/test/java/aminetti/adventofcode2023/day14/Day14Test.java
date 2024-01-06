@@ -57,7 +57,7 @@ class Day14Test {
         assertThat(weight, is(greaterThan(64L)));
         assertThat(weight, is(lessThan(106699L)));
         assertThat(weight, is(lessThan(106708L)));
-        assertThat(weight, is(64L));
+        assertThat(weight, is(106689L));
     }
 
 }
