@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.lang.Integer.parseInt;
 
@@ -21,11 +23,11 @@ public class Day19 {
         workflows = parseRules(list.subList(0, split));
         workflows.put("A", new Workflow("A"));
         workflows.put("R", new Workflow("R"));
-        System.out.println(workflows);
+        //System.out.println(workflows);
 
-        System.out.println("---");
+        //System.out.println("---");
         parts = parseParts(list.subList(split + 1, list.size()));
-        System.out.println(parts);
+        //System.out.println(parts);
     }
 
     private Map<String, Workflow> parseRules(List<String> strings) {
@@ -73,27 +75,146 @@ public class Day19 {
     }
 
     public long solve() {
-        ArrayList<Part> goodParts = new ArrayList<>();
-        for (Part p : parts) {
-            Workflow firstWf = firstWf = workflows.get("in");
-//                    workflows.values().stream()
-//                    .filter(wf -> wf.test(p))
-//                    .findFirst().orElseThrow();
+        return solve(parts.stream());
+    }
 
-            Workflow wf = firstWf;
+    private long solve(Stream<Part> parts) {
+        return parts.unordered().parallel().filter(p -> {
+
+            Workflow wf = workflows.get("in");
             do {
                 String nextName = wf.nextWorkflowName(p);
                 wf = workflows.get(nextName);
             } while (!wf.isAccepted() && !wf.isRejected());
 
+            return wf.isAccepted();
+        }).mapToLong(Part::sumProps).sum();
+    }
+
+    @Deprecated // too expensive =)
+    public long solveWithAllPossibleParts() {
+        Stream<Part> allParts = IntStream.range(1, 4000).boxed().flatMap(x ->
+                IntStream.range(1, 4000).boxed().flatMap(m ->
+                        IntStream.range(1, 4000).boxed().flatMap(a ->
+                                IntStream.range(1, 4000).boxed().flatMap(s ->
+                                        Stream.of(new Part(Map.of("x", x, "m", m, "a", a, "s", s)))))));
+        return solve(allParts);
+    }
+
+
+    public long solveWithMetaParts() {
+        RangePart rangePart = new RangePart("in");
+
+        Deque<RangePart> workQueue = new LinkedList<>();
+        workQueue.add(rangePart);
+
+        List<RangePart> goodRanges = new ArrayList<>();
+        while (!workQueue.isEmpty()) {
+            RangePart curr = workQueue.pop();
+            Workflow wf = workflows.get(curr.nextWf);
+
             if (wf.isAccepted()) {
-                goodParts.add(p);
+                goodRanges.add(curr);
+                continue;
             }
 
+            if (wf.isRejected()) {
+                continue;
+            }
+
+            for (Rule r : wf.rules) {
+                if (r.prop == null) {
+                    curr.nextWf = r.dest;
+                    workQueue.add(curr);
+                } else if (r.op == '<') {
+                    RangePart matchingRange = curr.splitLow(r.prop, r.i - 1);
+                    matchingRange.nextWf = r.dest;
+                    workQueue.add(matchingRange);
+
+                    RangePart notMathingRange = curr.splitHigh(r.prop, r.i);
+                    curr = notMathingRange;
+                } else {
+                    RangePart matchingRange = curr.splitHigh(r.prop, r.i + 1);
+                    matchingRange.nextWf = r.dest;
+                    workQueue.add(matchingRange);
+
+                    RangePart notMathingRange = curr.splitLow(r.prop, r.i);
+                    curr = notMathingRange;
+                }
+            }
         }
 
-        LOGGER.info("Good parts: {}", goodParts);
-        return goodParts.stream().mapToLong(Part::sumProps).sum();
+        LOGGER.info("Good ranges: {}", goodRanges);
+        return goodRanges.stream().mapToLong(RangePart::totalCombinations).sum();
+    }
+
+    public static class RangePart {
+        public static final long MAX_VALUE = 4000L;
+
+        public String nextWf;
+        public Map<String, Long> min;
+        public Map<String, Long> max;
+
+        public RangePart(RangePart other) {
+            this.max = new HashMap<>(other.max);
+            this.min = new HashMap<>(other.min);
+        }
+
+        public RangePart(String nextWf) {
+            this.nextWf = nextWf;
+            min = Map.of("x", 1L, "m", 1L, "a", 1L, "s", 1L);
+            max = Map.of("x", MAX_VALUE, "m", MAX_VALUE, "a", MAX_VALUE, "s", MAX_VALUE);
+        }
+
+        public RangePart splitLow(String prop, long newMax) {
+            RangePart rangePart = new RangePart(this);
+            rangePart.max.put(prop, newMax);
+            return rangePart;
+        }
+
+        public RangePart splitHigh(String prop, long newMin) {
+            RangePart rangePart = new RangePart(this);
+            rangePart.min.put(prop, newMin);
+            return rangePart;
+        }
+
+        public long totalCombinations() {
+            return sizeOfRangeByProp("x") * sizeOfRangeByProp("a")
+                    * sizeOfRangeByProp("m") * sizeOfRangeByProp("s");
+        }
+
+        // not really required
+        public long totalSumOfCombinationsWithMath() {
+            System.out.println(this);
+            return sumByProp("x") * (totalCombinations() / sizeOfRangeByProp("x"))
+                    + sumByProp("s") * (totalCombinations() / sizeOfRangeByProp("s"))
+                    + sumByProp("a") * (totalCombinations() / sizeOfRangeByProp("a"))
+                    + sumByProp("m") * (totalCombinations() / sizeOfRangeByProp("m"));
+        }
+
+        // not really required
+        private long sizeOfRangeByProp(String prop) {
+            return (max.get(prop) - min.get(prop)) + 1;
+        }
+
+        // not really required
+        private long sumByProp(String prop) {
+            return sumFirstNums(max.get(prop)) - sumFirstNums(min.get(prop) - 1L);
+        }
+
+        // not really required
+        public static long sumFirstNums(long x) {
+            return (x * (x + 1L)) / 2;
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", RangePart.class.getSimpleName() + "[", "]")
+                    .add("nextWf='" + nextWf + "'")
+                    .add("min=" + min)
+                    .add("max=" + max)
+                    .toString();
+        }
     }
 
     public static class Part {
@@ -143,7 +264,7 @@ public class Day19 {
         }
 
         public String nextWorkflowName(Part p) {
-            LOGGER.info("Checking the sf {} for {}", this, p);
+            LOGGER.debug("Checking the sf {} for {}", this, p);
             for (Rule rule : rules) {
                 if (rule.prop == null || rule.test(p)) {
                     return rule.dest;
@@ -153,7 +274,7 @@ public class Day19 {
         }
     }
 
-    private record Rule(String prop, char op, int i, String dest) {
+    public record Rule(String prop, char op, int i, String dest) {
 
         public boolean test(Part p) {
             if (prop == null) return false;
