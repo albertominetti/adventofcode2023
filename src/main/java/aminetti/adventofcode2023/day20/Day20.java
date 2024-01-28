@@ -15,11 +15,11 @@ public class Day20 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Day20.class);
 
     private final Map<String, M> modules = new HashMap<>();
-    private final Deque<Signal> queue = new LinkedList();
+    private final Deque<Signal> queue = new LinkedList<>();
 
     private Long currentRun = 0L;
-    private Map<Long, Long> lows = new HashMap<>();
-    private Map<Long, Long> highs = new HashMap<>();
+    private final Map<Long, Long> lows = new HashMap<>();
+    private final Map<Long, Long> highs = new HashMap<>();
 
 
     Conjunction feeder; // only for part 2
@@ -127,7 +127,7 @@ public class Day20 {
     }
 
 
-    public abstract class M {
+    public abstract static class M {
         protected final List<String> downstreams = new ArrayList<>();
 
         public abstract String getName();
@@ -215,7 +215,7 @@ public class Day20 {
 
     public class Conjunction extends M {
         private final String name;
-        private final Map<String, Pulse> upstreamsWhithLastPulse = new LinkedHashMap();
+        private final Map<String, Pulse> upstreamsWhithLastPulse = new LinkedHashMap<>();
 
         public Conjunction(String name) {
             this.name = name;
